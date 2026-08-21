@@ -1,0 +1,24 @@
+name: Validate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate metadata JSON
+        run: python3 -m json.tool metadata.json >/dev/null
+
+      - name: Install GLib tools
+        run: sudo apt-get update && sudo apt-get install -y libglib2.0-bin zip
+
+      - name: Compile GSettings schema
+        run: glib-compile-schemas schemas
+
+      - name: Build extension package
+        run: ./scripts/build.sh
