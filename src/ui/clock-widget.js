@@ -26,22 +26,10 @@ export class ClockWidget {
     create(textColor) {
         const monitor = Main.layoutManager.primaryMonitor;
         const height = monitor?.height ?? this._defaults.scaling.baseHeight;
+        const labels = this._createLabels(height, textColor);
 
-        const labels = this._createLabels(
-            height,
-            textColor
-        );
-
-        this._primary = this._createContainer(
-            'rain-clock-container',
-            labels,
-            monitor
-        );
-
-        Main.layoutManager._backgroundGroup.add_child(
-            this._primary.container
-        );
-
+        this._primary = this._createContainer('rain-clock-container', labels, monitor);
+        Main.layoutManager._backgroundGroup.add_child(this._primary.container);
         this._onCreate?.(this._primary.container);
 
         this._rebuildExtraMonitors(textColor);
@@ -55,19 +43,10 @@ export class ClockWidget {
         if (!this._primary)
             return;
 
-        this._applyLabelStyles(
-            this._primary.labels,
-            this._primary.monitor.height,
-            textColor
-        );
+        this._applyLabelStyles(this._primary.labels, this._primary.monitor.height, textColor);
 
-        for (const extra of this._extras) {
-            this._applyLabelStyles(
-                extra.labels,
-                extra.monitor.height,
-                textColor
-            );
-        }
+        for (const extra of this._extras)
+            this._applyLabelStyles(extra.labels, extra.monitor.height, textColor);
     }
 
     update() {
@@ -75,11 +54,9 @@ export class ClockWidget {
             return;
 
         const now = new Date();
-
         const day = DAYS[now.getDay()];
         const dd = String(now.getDate()).padStart(2, '0');
         const dateFormat = this._settings.get_string('date-format');
-
         let date;
 
         if (dateFormat === 'numeric') {
@@ -91,7 +68,6 @@ export class ClockWidget {
 
         const hours = now.getHours();
         const mins = String(now.getMinutes()).padStart(2, '0');
-
         let time;
 
         if (this._settings.get_boolean('use-24h')) {
@@ -102,21 +78,12 @@ export class ClockWidget {
             time = `${String(h12).padStart(2, '0')}:${mins} ${ampm}`;
         }
 
-        this._setLabels(
-            this._primary.labels,
-            day,
-            date,
-            `${this._defaults.timeChar} ${time} ${this._defaults.timeChar}`
-        );
+        const timeText = `${this._defaults.timeChar} ${time} ${this._defaults.timeChar}`;
 
-        for (const extra of this._extras) {
-            this._setLabels(
-                extra.labels,
-                day,
-                date,
-                `${this._defaults.timeChar} ${time} ${this._defaults.timeChar}`
-            );
-        }
+        this._setLabels(this._primary.labels, day, date, timeText);
+
+        for (const extra of this._extras)
+            this._setLabels(extra.labels, day, date, timeText);
     }
 
     refreshMonitors(textColor) {
@@ -132,23 +99,10 @@ export class ClockWidget {
         const marginX = this._settings.get_int('margin-x');
         const marginY = this._settings.get_int('margin-y');
 
-        this._positionContainer(
-            this._primary.container,
-            this._primary.monitor,
-            position,
-            marginX,
-            marginY
-        );
+        this._positionContainer(this._primary, position, marginX, marginY);
 
-        for (const extra of this._extras) {
-            this._positionContainer(
-                extra.container,
-                extra.monitor,
-                position,
-                marginX,
-                marginY
-            );
-        }
+        for (const extra of this._extras)
+            this._positionContainer(extra, position, marginX, marginY);
     }
 
     destroy() {
@@ -156,7 +110,6 @@ export class ClockWidget {
             extra.container.destroy();
 
         this._extras = [];
-
         this._primary?.container?.destroy();
         this._primary = null;
     }
@@ -175,30 +128,16 @@ export class ClockWidget {
                 continue;
 
             const monitor = monitors[i];
-            const labels = this._createLabels(
-                monitor.height || this._defaults.scaling.baseHeight,
-                textColor
-            );
+            const labels = this._createLabels(monitor.height || this._defaults.scaling.baseHeight, textColor);
+            const widget = this._createContainer('rain-clock-container', labels, monitor);
 
-            const widget = this._createContainer(
-                'rain-clock-container',
-                labels,
-                monitor
-            );
-
-            Main.layoutManager._backgroundGroup.add_child(
-                widget.container
-            );
-
+            Main.layoutManager._backgroundGroup.add_child(widget.container);
             this._extras.push(widget);
         }
     }
 
     _createLabels(monitorHeight, textColor) {
-        const styles = this._buildStyles(
-            monitorHeight,
-            textColor
-        );
+        const styles = this._buildStyles(monitorHeight, textColor);
 
         const dayLabel = new St.Label({
             style: styles.day,
@@ -233,21 +172,34 @@ export class ClockWidget {
     }
 
     _createContainer(styleClass, labels, monitor) {
-        const container = new St.BoxLayout({
-            name: 'RainClockWidget',
+        const container = new St.Widget({
+            name: 'RainClockMonitor',
             style_class: styleClass,
+            layout_manager: new Clutter.BinLayout(),
+            reactive: false,
+            can_focus: false,
+            track_hover: false,
+            width: monitor.width,
+            height: monitor.height,
+        });
+
+        const clock = new St.BoxLayout({
+            name: 'RainClockWidget',
             vertical: true,
             reactive: false,
             can_focus: false,
             track_hover: false,
         });
 
-        container.add_child(labels.day);
-        container.add_child(labels.date);
-        container.add_child(labels.time);
+        clock.add_child(labels.day);
+        clock.add_child(labels.date);
+        clock.add_child(labels.time);
+
+        container.add_child(clock);
 
         return {
             container,
+            clock,
             labels,
             monitor,
         };
@@ -260,10 +212,7 @@ export class ClockWidget {
     }
 
     _applyLabelStyles(labels, monitorHeight, textColor) {
-        const styles = this._buildStyles(
-            monitorHeight,
-            textColor
-        );
+        const styles = this._buildStyles(monitorHeight, textColor);
 
         labels.day.set_style(styles.day);
         labels.date.set_style(styles.date);
@@ -271,34 +220,13 @@ export class ClockWidget {
     }
 
     _buildStyles(monitorHeight, textColor) {
-        const scale =
-            monitorHeight / this._defaults.scaling.baseHeight;
-
-        const daySize =
-            Math.round(this._defaults.day.baseSize * scale);
-
-        const dayLetterSpacing =
-            Math.round(
-                this._defaults.day.baseLetterSpacing * scale
-            );
-
-        const subSize =
-            Math.round(this._defaults.secondary.baseSize * scale);
-
-        const subLetterSpacing =
-            Math.round(
-                this._defaults.secondary.baseLetterSpacing * scale
-            );
-
-        const datePadding =
-            Math.round(
-                this._defaults.secondary.datePaddingTop * scale
-            );
-
-        const timePadding =
-            Math.round(
-                this._defaults.secondary.timePaddingTop * scale
-            );
+        const scale = monitorHeight / this._defaults.scaling.baseHeight;
+        const daySize = Math.round(this._defaults.day.baseSize * scale);
+        const dayLetterSpacing = Math.round(this._defaults.day.baseLetterSpacing * scale);
+        const subSize = Math.round(this._defaults.secondary.baseSize * scale);
+        const subLetterSpacing = Math.round(this._defaults.secondary.baseLetterSpacing * scale);
+        const datePadding = Math.round(this._defaults.secondary.datePaddingTop * scale);
+        const timePadding = Math.round(this._defaults.secondary.timePaddingTop * scale);
 
         return {
             day:
@@ -326,48 +254,69 @@ export class ClockWidget {
         };
     }
 
-    _positionContainer(container, monitor, position, marginX, marginY) {
-        let width = container.width;
-        let height = container.height;
+    _getClockSize(clock) {
+        try {
+            const [minWidth, naturalWidth] = clock.get_preferred_width(-1);
+            const [minHeight, naturalHeight] = clock.get_preferred_height(naturalWidth);
 
-        if (height < 10)
-            height = 100;
+            return {
+                width: Math.max(naturalWidth || minWidth || 1, 1),
+                height: Math.max(naturalHeight || minHeight || 1, 1),
+            };
+        } catch (error) {
+            return {
+                width: Math.max(clock.width, 1),
+                height: Math.max(clock.height, 1),
+            };
+        }
+    }
+
+    _positionContainer(widget, position, marginX, marginY) {
+        const { container, clock, monitor } = widget;
+
+        if (!container || !clock || !monitor)
+            return;
+
+        container.width = monitor.width;
+        container.height = monitor.height;
+        container.set_position(Math.round(monitor.x), Math.round(monitor.y));
+
+        const { width, height } = this._getClockSize(clock);
+
+        clock.width = width;
+        clock.height = height;
 
         let x;
         let y;
 
         switch (position) {
             case 'top-left':
-                x = monitor.x + marginX;
-                y = monitor.y + marginY;
+                x = marginX;
+                y = marginY;
                 break;
 
             case 'top-right':
-                x = monitor.x + monitor.width - width - marginX;
-                y = monitor.y + marginY;
+                x = monitor.width - width - marginX;
+                y = marginY;
                 break;
 
             case 'bottom-left':
-                x = monitor.x + marginX;
-                y = monitor.y + monitor.height - height - marginY;
+                x = marginX;
+                y = monitor.height - height - marginY;
                 break;
 
             case 'bottom-right':
-                x = monitor.x + monitor.width - width - marginX;
-                y = monitor.y + monitor.height - height - marginY;
+                x = monitor.width - width - marginX;
+                y = monitor.height - height - marginY;
                 break;
 
             case 'center':
             default:
-                container.width = monitor.width;
-                x = monitor.x;
-                y = monitor.y + (monitor.height - height) / 2;
+                x = (monitor.width - width) / 2;
+                y = (monitor.height - height) / 2;
                 break;
         }
 
-        container.set_position(
-            Math.round(x),
-            Math.round(y)
-        );
+        clock.set_position(Math.round(x), Math.round(y));
     }
 }
