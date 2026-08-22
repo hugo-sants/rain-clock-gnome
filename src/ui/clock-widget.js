@@ -306,7 +306,7 @@ export class ClockWidget {
                 width: Math.max(naturalWidth || minWidth || 1, 1),
                 height: Math.max(naturalHeight || minHeight || 1, 1),
             };
-        } catch (error) {
+        } catch {
             return {
                 width: Math.max(clock.width, 1),
                 height: Math.max(clock.height, 1),
