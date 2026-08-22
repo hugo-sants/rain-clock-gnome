@@ -1,6 +1,7 @@
 import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
 import Gio from 'gi://Gio';
+import Gdk from 'gi://Gdk';
 
 import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
@@ -48,10 +49,7 @@ export default class RainClockPreferences extends ExtensionPreferences {
         ];
 
         positionRow.set_selected(
-            Math.max(
-                0,
-                positions.indexOf(settings.get_string('position'))
-            )
+            Math.max(0, positions.indexOf(settings.get_string('position')))
         );
 
         positionRow.connect('notify::selected', () => {
@@ -73,7 +71,14 @@ export default class RainClockPreferences extends ExtensionPreferences {
                 value: settings.get_int('margin-x'),
             }),
         });
-        settings.bind('margin-x', marginXRow, 'value', Gio.SettingsBindFlags.DEFAULT);
+
+        settings.bind(
+            'margin-x',
+            marginXRow,
+            'value',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
         layoutGroup.add(marginXRow);
 
         const marginYRow = new Adw.SpinRow({
@@ -86,7 +91,14 @@ export default class RainClockPreferences extends ExtensionPreferences {
                 value: settings.get_int('margin-y'),
             }),
         });
-        settings.bind('margin-y', marginYRow, 'value', Gio.SettingsBindFlags.DEFAULT);
+
+        settings.bind(
+            'margin-y',
+            marginYRow,
+            'value',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
         layoutGroup.add(marginYRow);
 
         const timeGroup = new Adw.PreferencesGroup({
@@ -116,22 +128,15 @@ export default class RainClockPreferences extends ExtensionPreferences {
         });
 
         dateFormatRow.set_selected(
-            settings.get_string('date-format') === 'numeric'
-                ? 1
-                : 0
+            settings.get_string('date-format') === 'numeric' ? 1 : 0
         );
 
-        dateFormatRow.connect(
-            'notify::selected',
-            () => {
-                settings.set_string(
-                    'date-format',
-                    dateFormatRow.get_selected() === 1
-                        ? 'numeric'
-                        : 'text'
-                );
-            }
-        );
+        dateFormatRow.connect('notify::selected', () => {
+            settings.set_string(
+                'date-format',
+                dateFormatRow.get_selected() === 1 ? 'numeric' : 'text'
+            );
+        });
 
         timeGroup.add(dateFormatRow);
 
@@ -227,9 +232,14 @@ export default class RainClockPreferences extends ExtensionPreferences {
         });
         colorPage.add(colorsGroup);
 
+        const colorDialog = new Gtk.ColorDialog({
+            with_alpha: false,
+        });
+
         this._addColorEntry(
             colorsGroup,
             settings,
+            colorDialog,
             'dark-text-color',
             'Dark text',
             'Used on bright wallpapers.'
@@ -238,6 +248,7 @@ export default class RainClockPreferences extends ExtensionPreferences {
         this._addColorEntry(
             colorsGroup,
             settings,
+            colorDialog,
             'mid-text-color',
             'Mid text',
             'Used on medium-brightness wallpapers.'
@@ -246,26 +257,65 @@ export default class RainClockPreferences extends ExtensionPreferences {
         this._addColorEntry(
             colorsGroup,
             settings,
+            colorDialog,
             'light-text-color',
             'Light text',
             'Used on dark wallpapers.'
         );
     }
 
-    _addColorEntry(group, settings, key, title, subtitle) {
-        const row = new Adw.EntryRow({
+    _addColorEntry(
+        group,
+        settings,
+        colorDialog,
+        key,
+        title,
+        subtitle
+    ) {
+        const row = new Adw.ActionRow({
             title,
-            text: settings.get_string(key),
-            tooltip_text: subtitle,
+            subtitle,
         });
 
-        row.connect('changed', () => {
-            const value = row.get_text().trim();
-
-            if (/^#[0-9a-fA-F]{6}$/.test(value))
-                settings.set_string(key, value);
+        const button = new Gtk.ColorDialogButton({
+            dialog: colorDialog,
         });
+        
+        button.set_valign(Gtk.Align.CENTER);
+        button.set_hexpand(false);
+        button.set_vexpand(false);
+
+        button.set_rgba(
+            this._hexToRgba(settings.get_string(key))
+        );
+
+        button.connect('notify::rgba', () => {
+            const rgba = button.get_rgba();
+            const value = this._rgbaToHex(rgba);
+
+            settings.set_string(key, value);
+        });
+        row.add_suffix(button);
 
         group.add(row);
+    }
+
+    _hexToRgba(hex) {
+        const rgba = new Gdk.RGBA();
+
+        if (!rgba.parse(hex))
+            rgba.parse('#282828');
+
+        rgba.alpha = 1.0;
+
+        return rgba;
+    }
+
+    _rgbaToHex(rgba) {
+        const r = Math.round(rgba.red * 255);
+        const g = Math.round(rgba.green * 255);
+        const b = Math.round(rgba.blue * 255);
+
+        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
     }
 }
