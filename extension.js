@@ -174,10 +174,6 @@ export default class RainClockExtension extends Extension {
 
         this._setTextColor(result.textColor);
 
-        log(
-            `[RainClock] wallpaper center rgb(${result.r}, ${result.g}, ${result.b}) ` +
-            `luminance=${result.luminance.toFixed(3)} -> ${result.textColor}`
-        );
     }
 
     _setTextColor(color) {
@@ -187,7 +183,6 @@ export default class RainClockExtension extends Extension {
         this._textColor = color;
         this._clock.updateColor(color);
 
-        log(`[RainClock] applied color ${color}`);
     }
 
     _loadStylesheet() {
