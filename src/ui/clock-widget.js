@@ -21,6 +21,7 @@ export class ClockWidget {
         this._primary = null;
         this._extras = [];
         this._onCreate = onCreate;
+        this._initialLayout = true;
     }
 
     create(textColor) {
@@ -94,13 +95,27 @@ export class ClockWidget {
     reposition() {
         if (!this._primary)
             return;
-
+    
+        if (this._initialLayout) {
+            this._initialLayout = false;
+    
+            this._primary.container.queue_relayout();
+            this._primary.clock.queue_relayout();
+    
+            for (const extra of this._extras) {
+                extra.container.queue_relayout();
+                extra.clock.queue_relayout();
+            }
+    
+            return;
+        }
+    
         const position = this._settings.get_string('position');
         const marginX = this._settings.get_int('margin-x');
         const marginY = this._settings.get_int('margin-y');
-
+    
         this._positionContainer(this._primary, position, marginX, marginY);
-
+    
         for (const extra of this._extras)
             this._positionContainer(extra, position, marginX, marginY);
     }
