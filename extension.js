@@ -8,7 +8,6 @@ import { DEFAULTS } from './src/config.js';
 import { WallpaperColorAnalyzer } from './src/core/color-analyzer.js';
 import { WallpaperMonitor } from './src/core/wallpaper-monitor.js';
 import { ClockWidget } from './src/ui/clock-widget.js';
-import { installFonts } from './src/utils/fonts.js';
 
 export default class RainClockExtension extends Extension {
     enable() {
@@ -19,8 +18,6 @@ export default class RainClockExtension extends Extension {
 
         this._stylesheetFile = this.dir.get_child('stylesheet.css');
         this._loadStylesheet();
-
-        installFonts(this);
 
         this._colorAnalyzer = new WallpaperColorAnalyzer(this._settings, DEFAULTS);
 
