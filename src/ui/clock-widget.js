@@ -1,5 +1,7 @@
 import Clutter from 'gi://Clutter';
+
 import Pango from 'gi://Pango';
+
 import St from 'gi://St';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -22,6 +24,7 @@ export class ClockWidget {
         this._extras = [];
         this._onCreate = onCreate;
         this._initialLayout = true;
+        this._allocationId = null;
     }
 
     create(textColor) {
@@ -34,6 +37,21 @@ export class ClockWidget {
         this._onCreate?.(this._primary.container);
 
         this._rebuildExtraMonitors(textColor);
+
+        this._allocationId = this._primary.clock.connect('notify::allocation', () => {
+            if (!this._initialLayout)
+                return;
+
+            this._initialLayout = false;
+
+            if (this._allocationId) {
+                this._primary.clock.disconnect(this._allocationId);
+                this._allocationId = null;
+            }
+
+            this._positionCurrentWidgets();
+        });
+
         this.update();
         this.reposition();
 
@@ -97,8 +115,6 @@ export class ClockWidget {
             return;
     
         if (this._initialLayout) {
-            this._initialLayout = false;
-    
             this._primary.container.queue_relayout();
             this._primary.clock.queue_relayout();
     
@@ -109,7 +125,25 @@ export class ClockWidget {
     
             return;
         }
-    
+
+        this._positionCurrentWidgets();
+    }
+
+    destroy() {
+        if (this._allocationId) {
+            this._primary?.clock?.disconnect(this._allocationId);
+            this._allocationId = null;
+        }
+
+        for (const extra of this._extras)
+            extra.container.destroy();
+
+        this._extras = [];
+        this._primary?.container?.destroy();
+        this._primary = null;
+    }
+
+    _positionCurrentWidgets() {
         const position = this._settings.get_string('position');
         const marginX = this._settings.get_int('margin-x');
         const marginY = this._settings.get_int('margin-y');
@@ -118,15 +152,6 @@ export class ClockWidget {
     
         for (const extra of this._extras)
             this._positionContainer(extra, position, marginX, marginY);
-    }
-
-    destroy() {
-        for (const extra of this._extras)
-            extra.container.destroy();
-
-        this._extras = [];
-        this._primary?.container?.destroy();
-        this._primary = null;
     }
 
     _rebuildExtraMonitors(textColor) {
