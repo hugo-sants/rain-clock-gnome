@@ -186,7 +186,7 @@ export default class RainClockExtension extends Extension {
         try {
             const theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
             theme.load_stylesheet(this._stylesheetFile);
-        } catch {
+        } catch (error) {
             log(`[RainClock] stylesheet load failed: ${error.message}`);
         }
     }
@@ -195,6 +195,8 @@ export default class RainClockExtension extends Extension {
         try {
             const theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
             theme.unload_stylesheet(this._stylesheetFile);
-        } catch {}
+        } catch {
+            // Ignore stylesheet unload failures.
+        }
     }
 }
