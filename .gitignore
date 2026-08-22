@@ -1,0 +1,14 @@
+schemas/gschemas.compiled
+__pycache__/
+*.pyc
+
+dist/*.zip
+
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+node_modules/
+dist/

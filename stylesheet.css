@@ -1,0 +1,19 @@
+@font-face {
+    font-family: 'Anurati';
+    src: url('fonts/Anurati.otf');
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url('fonts/Poppins.ttf');
+}
+
+.rain-clock-container {
+    background: transparent;
+    spacing: 0;
+    padding: 0;
+}
+
+.rain-clock-label {
+    background: transparent;
+}

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.rainclock"
+          path="/org/gnome/shell/extensions/rainclock/">
+
+
+    <key name="position" type="s">
+      <default>'center'</default>
+      <summary>Widget position</summary>
+      <description>Position of the widget on the desktop.</description>
+    </key>
+
+    <key name="margin-x" type="i">
+      <default>60</default>
+      <summary>Horizontal margin</summary>
+      <description>Horizontal margin used by edge positions.</description>
+    </key>
+
+    <key name="margin-y" type="i">
+      <default>80</default>
+      <summary>Vertical margin</summary>
+      <description>Vertical margin used by edge positions.</description>
+    </key>
+
+    <key name="use-24h" type="b">
+      <default>false</default>
+      <summary>Use 24-hour format</summary>
+      <description>Show the time in 24-hour format instead of AM/PM.</description>
+    </key>
+
+    <key name="date-format" type="s">
+      <default>'text'</default>
+      <summary>Date format</summary>
+      <description>text = 01 MAY 2026; numeric = 01.05.2026.</description>
+    </key>
+
+    <key name="auto-color" type="b">
+      <default>true</default>
+      <summary>Automatic text color</summary>
+      <description>Choose a grayscale text color from the center of the current wallpaper.</description>
+    </key>
+
+    <key name="center-region-size" type="d">
+      <default>0.20</default>
+      <summary>Center analysis region</summary>
+      <description>Fraction of the wallpaper width and height analyzed around the center.</description>
+    </key>
+
+    <key name="dark-threshold" type="d">
+      <default>0.20</default>
+      <summary>Dark threshold</summary>
+      <description>Below this luminance value, use the light text color.</description>
+    </key>
+
+    <key name="light-threshold" type="d">
+      <default>0.80</default>
+      <summary>Light threshold</summary>
+      <description>Above this luminance value, use the dark text color.</description>
+    </key>
+
+    <key name="dark-text-color" type="s">
+      <default>'#111111'</default>
+      <summary>Dark text color</summary>
+      <description>Text color used on bright wallpapers.</description>
+    </key>
+
+    <key name="mid-text-color" type="s">
+      <default>'#282828'</default>
+      <summary>Mid text color</summary>
+      <description>Text color used on medium-brightness wallpapers.</description>
+    </key>
+
+    <key name="light-text-color" type="s">
+      <default>'#eeeeee'</default>
+      <summary>Light text color</summary>
+      <description>Text color used on dark wallpapers.</description>
+    </key>
+  </schema>
+</schemalist>
