@@ -23,19 +23,27 @@ export default class RainClockPreferences extends ExtensionPreferences {
             title: 'Position',
             subtitle: 'Position of the clock on the desktop.',
             model: Gtk.StringList.new([
-                'Center',
                 'Top left',
+                'Top',
                 'Top right',
+                'Left',
+                'Center',
+                'Right',
                 'Bottom left',
+                'Bottom',
                 'Bottom right',
             ]),
         });
 
         const positions = [
-            'center',
             'top-left',
+            'top',
             'top-right',
+            'left',
+            'center',
+            'right',
             'bottom-left',
+            'bottom',
             'bottom-right',
         ];
 

@@ -38,19 +38,22 @@ export class ClockWidget {
 
         this._rebuildExtraMonitors(textColor);
 
-        this._allocationId = this._primary.clock.connect('notify::allocation', () => {
-            if (!this._initialLayout)
-                return;
+        this._allocationId = this._primary.clock.connect(
+            'notify::allocation',
+            () => {
+                if (!this._initialLayout)
+                    return;
 
-            this._initialLayout = false;
+                this._initialLayout = false;
 
-            if (this._allocationId) {
-                this._primary.clock.disconnect(this._allocationId);
-                this._allocationId = null;
+                if (this._allocationId) {
+                    this._primary.clock.disconnect(this._allocationId);
+                    this._allocationId = null;
+                }
+
+                this._positionCurrentWidgets();
             }
-
-            this._positionCurrentWidgets();
-        });
+        );
 
         this.update();
         this.reposition();
@@ -335,13 +338,38 @@ export class ClockWidget {
                 y = marginY;
                 break;
 
+            case 'top':
+                x = (monitor.width - width) / 2;
+                y = marginY;
+                break;
+
             case 'top-right':
                 x = monitor.width - width - marginX;
                 y = marginY;
                 break;
 
+            case 'left':
+                x = marginX;
+                y = (monitor.height - height) / 2;
+                break;
+
+            case 'center':
+                x = (monitor.width - width) / 2;
+                y = (monitor.height - height) / 2;
+                break;
+
+            case 'right':
+                x = monitor.width - width - marginX;
+                y = (monitor.height - height) / 2;
+                break;
+
             case 'bottom-left':
                 x = marginX;
+                y = monitor.height - height - marginY;
+                break;
+
+            case 'bottom':
+                x = (monitor.width - width) / 2;
                 y = monitor.height - height - marginY;
                 break;
 
@@ -350,7 +378,6 @@ export class ClockWidget {
                 y = monitor.height - height - marginY;
                 break;
 
-            case 'center':
             default:
                 x = (monitor.width - width) / 2;
                 y = (monitor.height - height) / 2;
