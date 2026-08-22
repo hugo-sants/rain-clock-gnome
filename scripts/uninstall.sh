@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-INSTALL_DIR="$HOME/.local/share/gnome-shell/extensions/rainclock@rainclock"
+INSTALL_DIR="$HOME/.local/share/gnome-shell/extensions/rainclock@hugo-sants.github.com"
 
 if [[ -d "$INSTALL_DIR" ]]; then
     rm -rf "$INSTALL_DIR"

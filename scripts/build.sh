@@ -24,10 +24,10 @@ cp -a "$ROOT_DIR/schemas" "$STAGING_DIR/"
 glib-compile-schemas "$STAGING_DIR/schemas"
 rm -f "$STAGING_DIR/schemas/gschemas.compiled"
 
-rm -f "$DIST_DIR/rainclock@rainclock.zip"
+rm -f "$DIST_DIR/rainclock@hugo-sants.github.com.zip"
 (
     cd "$STAGING_DIR"
-    zip -qr "$DIST_DIR/rainclock@rainclock.zip" .
+    zip -qr "$DIST_DIR/rainclock@hugo-sants.github.com.zip" .
 )
 
-echo "Built: $DIST_DIR/rainclock@rainclock.zip"
+echo "Built: $DIST_DIR/rainclock@hugo-sants.github.com.zip"
