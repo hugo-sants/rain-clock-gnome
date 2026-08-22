@@ -1,14 +1,14 @@
-# GNOME / generated
 schemas/gschemas.compiled
 __pycache__/
 *.pyc
 
-# Build output
 dist/*.zip
 
-# Editor / OS
 .vscode/
 .idea/
 *.swp
 *~
 .DS_Store
+
+node_modules/
+dist/
