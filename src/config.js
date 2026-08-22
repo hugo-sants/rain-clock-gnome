@@ -1,7 +1,4 @@
 export const DEFAULTS = {
-    position: 'center',
-    marginX: 60,
-    marginY: 80,
     timeChar: '-',
 
     day: {
@@ -23,9 +20,6 @@ export const DEFAULTS = {
     },
 
     wallpaper: {
-        centerRegionSize: 0.20,
         analysisSize: 100,
-        darkThreshold: 0.20,
-        lightThreshold: 0.80,
     },
 };
