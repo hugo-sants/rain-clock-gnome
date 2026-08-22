@@ -1,0 +1,12 @@
+{
+    "name": "rain-clock",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "lint": "eslint extension.js prefs.js src"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "eslint": "^10.8.1"
+    }
+}

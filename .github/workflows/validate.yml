@@ -1,24 +1,181 @@
 name: Validate
 
 on:
-  push:
-  pull_request:
+    push:
+    pull_request:
 
 jobs:
-  validate:
-    runs-on: ubuntu-latest
+    validate:
+        runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Validate metadata JSON
-        run: python3 -m json.tool metadata.json >/dev/null
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: npm
 
-      - name: Install GLib tools
-        run: sudo apt-get update && sudo apt-get install -y libglib2.0-bin zip
+            - name: Install system dependencies
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y \
+                      libglib2.0-bin \
+                      zip \
+                      unzip
 
-      - name: Compile GSettings schema
-        run: glib-compile-schemas schemas
+            - name: Install Node dependencies
+              run: npm ci
 
-      - name: Build extension package
-        run: ./scripts/build.sh
+            - name: Run ESLint
+              run: npm run lint
+
+            - name: Validate metadata
+              run: |
+                  python3 - <<'PY'
+                  import json
+
+                  with open("metadata.json", encoding="utf-8") as file:
+                      metadata = json.load(file)
+
+                  required = {
+                      "uuid",
+                      "name",
+                      "description",
+                      "shell-version",
+                      "url",
+                      "settings-schema",
+                  }
+
+                  missing = sorted(required - metadata.keys())
+
+                  if missing:
+                      raise SystemExit(
+                          f"Missing metadata fields: {', '.join(missing)}"
+                      )
+
+                  if "version" in metadata:
+                      raise SystemExit(
+                          "metadata.json contains deprecated 'version'"
+                      )
+
+                  if metadata["uuid"] != "rainclock@hugo-sants.github.com":
+                      raise SystemExit("Invalid UUID")
+
+                  if metadata["settings-schema"] != "org.gnome.shell.extensions.rainclock":
+                      raise SystemExit("Invalid settings-schema")
+
+                  if not metadata["shell-version"]:
+                      raise SystemExit("shell-version cannot be empty")
+
+                  print("metadata.json: OK")
+                  PY
+
+            - name: Validate GSettings schema
+              run: glib-compile-schemas schemas
+
+            - name: Validate JavaScript syntax
+              run: |
+                  find . \
+                      -path './node_modules' -prune \
+                      -o -path './dist' -prune \
+                      -o -name '*.js' -type f -print0 |
+                  xargs -0 -n1 node --check
+
+            - name: Build extension package
+              shell: bash
+              run: |
+                  set -euo pipefail
+
+                  rm -rf dist
+                  mkdir -p dist
+
+                  STAGING_DIR="$(mktemp -d)"
+
+                  cleanup() {
+                      rm -rf "$STAGING_DIR"
+                  }
+
+                  trap cleanup EXIT
+
+                  cp metadata.json "$STAGING_DIR/"
+                  cp extension.js "$STAGING_DIR/"
+                  cp prefs.js "$STAGING_DIR/"
+                  cp stylesheet.css "$STAGING_DIR/"
+
+                  cp -a src "$STAGING_DIR/"
+                  cp -a fonts "$STAGING_DIR/"
+                  cp -a schemas "$STAGING_DIR/"
+
+                  glib-compile-schemas "$STAGING_DIR/schemas"
+                  rm -f "$STAGING_DIR/schemas/gschemas.compiled"
+
+                  (
+                      cd "$STAGING_DIR"
+                      zip -qr \
+                          "$GITHUB_WORKSPACE/dist/rainclock@hugo-sants.github.com.zip" \
+                          .
+                  )
+
+            - name: Validate extension package
+              shell: bash
+              run: |
+                  set -euo pipefail
+
+                  ZIP="dist/rainclock@hugo-sants.github.com.zip"
+
+                  test -f "$ZIP"
+
+                  echo "Package contents:"
+                  unzip -l "$ZIP"
+
+                  required_files=(
+                      "metadata.json"
+                      "extension.js"
+                      "prefs.js"
+                      "stylesheet.css"
+                      "schemas/org.gnome.shell.extensions.rainclock.gschema.xml"
+                      "src/config.js"
+                      "src/core/color-analyzer.js"
+                      "src/core/wallpaper-monitor.js"
+                      "src/ui/clock-widget.js"
+                  )
+
+                  for file in "${required_files[@]}"; do
+                      if ! unzip -l "$ZIP" | grep -Fq "$file"; then
+                          echo "Missing required file: $file"
+                          exit 1
+                      fi
+                  done
+
+                  forbidden_paths=(
+                      ".git/"
+                      ".github/"
+                      "node_modules/"
+                      "dist/"
+                      "scripts/"
+                      "schemas/gschemas.compiled"
+                      "package.json"
+                      "package-lock.json"
+                      "eslint.config.js"
+                      "Makefile"
+                      "README.md"
+                      "LICENSE"
+                  )
+
+                  for path in "${forbidden_paths[@]}"; do
+                      if unzip -l "$ZIP" | grep -Fq "$path"; then
+                          echo "Forbidden path in package: $path"
+                          exit 1
+                      fi
+                  done
+
+                  echo "Package validation: OK"
+
+            - name: Upload extension package
+              uses: actions/upload-artifact@v4
+              with:
+                  name: rainclock-gnome-extension
+                  path: dist/rainclock@hugo-sants.github.com.zip
