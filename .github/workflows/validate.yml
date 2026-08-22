@@ -122,57 +122,67 @@ jobs:
             - name: Validate extension package
               shell: bash
               run: |
-                  set -euo pipefail
+                set -euo pipefail
 
-                  ZIP="dist/rainclock@hugo-sants.github.com.zip"
+                ZIP="dist/rainclock@hugo-sants.github.com.zip"
 
-                  test -f "$ZIP"
+                test -f "$ZIP"
 
-                  echo "Package contents:"
-                  unzip -l "$ZIP"
+                echo "Package contents:"
+                zipinfo -1 "$ZIP"
 
-                  required_files=(
-                      "metadata.json"
-                      "extension.js"
-                      "prefs.js"
-                      "stylesheet.css"
-                      "schemas/org.gnome.shell.extensions.rainclock.gschema.xml"
-                      "src/config.js"
-                      "src/core/color-analyzer.js"
-                      "src/core/wallpaper-monitor.js"
-                      "src/ui/clock-widget.js"
-                  )
+                required_files=(
+                    "metadata.json"
+                    "extension.js"
+                    "prefs.js"
+                    "stylesheet.css"
+                    "schemas/org.gnome.shell.extensions.rainclock.gschema.xml"
+                    "src/config.js"
+                    "src/core/color-analyzer.js"
+                    "src/core/wallpaper-monitor.js"
+                    "src/ui/clock-widget.js"
+                )
 
-                  for file in "${required_files[@]}"; do
-                      if ! unzip -l "$ZIP" | grep -Fq "$file"; then
-                          echo "Missing required file: $file"
-                          exit 1
-                      fi
-                  done
+                for file in "${required_files[@]}"; do
+                    if ! zipinfo -1 "$ZIP" | grep -Fxq "$file"; then
+                        echo "Missing required file: $file"
+                        exit 1
+                    fi
+                done
 
-                  forbidden_paths=(
-                      ".git/"
-                      ".github/"
-                      "node_modules/"
-                      "dist/"
-                      "scripts/"
-                      "schemas/gschemas.compiled"
-                      "package.json"
-                      "package-lock.json"
-                      "eslint.config.js"
-                      "Makefile"
-                      "README.md"
-                      "LICENSE"
-                  )
+                forbidden_paths=(
+                    ".git/"
+                    ".github/"
+                    "node_modules/"
+                    "dist/"
+                    "scripts/"
+                    "schemas/gschemas.compiled"
+                    "package.json"
+                    "package-lock.json"
+                    "eslint.config.js"
+                    "Makefile"
+                    "README.md"
+                    "LICENSE"
+                )
 
-                  for path in "${forbidden_paths[@]}"; do
-                      if unzip -l "$ZIP" | grep -Fq "$path"; then
-                          echo "Forbidden path in package: $path"
-                          exit 1
-                      fi
-                  done
+                for path in "${forbidden_paths[@]}"; do
+                    if zipinfo -1 "$ZIP" | grep -Fxq "$path"; then
+                        echo "Forbidden path in package: $path"
+                        exit 1
+                    fi
+                done
 
-                  echo "Package validation: OK"
+                if zipinfo -1 "$ZIP" | grep -Eq '(^|/)\.\.?(/|$)'; then
+                    echo "Forbidden parent/current-directory traversal path found"
+                    exit 1
+                fi
+
+                if zipinfo -1 "$ZIP" | grep -Eq '^/'; then
+                    echo "Forbidden absolute path found"
+                    exit 1
+                fi
+
+                echo "Package validation: OK"
 
             - name: Upload extension package
               uses: actions/upload-artifact@v4
