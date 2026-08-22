@@ -1,15 +1,10 @@
 {
   "uuid": "rainclock@hugo-sants.github.com",
   "name": "Rain Clock",
-  "description": "A customizable desktop clock for GNOME Shell, inspired by Rainmeter. Supports automatic wallpaper-aware colors, multiple monitors, configurable positioning, date and time formats, and customizable appearance.",
-  "version": 1,
+  "description": "A configurable desktop clock for GNOME Shell with wallpaper-aware colors, multi-monitor support, flexible positioning, and customizable date, time, and appearance settings.",
   "shell-version": [
-    "45",
-    "46",
-    "47",
-    "48",
-    "49",
-    "50"
+      "49"
   ],
+  "url": "https://github.com/hugo-sants/rain-clock-gnome",
   "settings-schema": "org.gnome.shell.extensions.rainclock"
 }
