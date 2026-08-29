@@ -54,10 +54,16 @@ git clone https://github.com/hugo-sants/rain-clock-gnome.git
 cd rain-clock-gnome
 ```
 
-Install the extension:
+Install the extension and its bundled fonts:
 
 ```bash
 make install
+```
+
+Install or update the fonts separately with:
+
+```bash
+make fonts-install
 ```
 
 Enable it:
@@ -125,6 +131,12 @@ Remove the installed extension:
 
 ```bash
 make uninstall
+```
+
+Remove the installed fonts with:
+
+```bash
+make fonts-uninstall
 ```
 
 ## Credits
