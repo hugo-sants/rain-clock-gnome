@@ -3,6 +3,15 @@
   <schema id="org.gnome.shell.extensions.rainclock"
           path="/org/gnome/shell/extensions/rainclock/">
 
+    <key name="style" type="s">
+        <default>'mond'</default>
+        <summary>Widget style</summary>
+        <description>Visual style used by the clock widget.</description>
+        <choices>
+            <choice value="mond"/>
+            <choice value="summit"/>
+        </choices>
+    </key>
 
     <key name="position" type="s">
       <default>'center'</default>
