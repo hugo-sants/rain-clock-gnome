@@ -4,6 +4,7 @@ import Gio from 'gi://Gio';
 import Gdk from 'gi://Gdk';
 
 import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+import { STYLE_OPTIONS } from './src/styles/style-options.js';
 
 export default class RainClockPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
@@ -13,11 +14,13 @@ export default class RainClockPreferences extends ExtensionPreferences {
             title: 'General',
             icon_name: 'preferences-system-symbolic',
         });
+
         window.add(generalPage);
 
         const layoutGroup = new Adw.PreferencesGroup({
             title: 'Layout',
         });
+
         generalPage.add(layoutGroup);
 
         const positionRow = new Adw.ComboRow({
@@ -104,18 +107,21 @@ export default class RainClockPreferences extends ExtensionPreferences {
         const timeGroup = new Adw.PreferencesGroup({
             title: 'Time and date',
         });
+
         generalPage.add(timeGroup);
 
         const use24hRow = new Adw.SwitchRow({
             title: '24-hour format',
             subtitle: 'Use 24-hour time instead of AM/PM.',
         });
+
         settings.bind(
             'use-24h',
             use24hRow,
             'active',
             Gio.SettingsBindFlags.DEFAULT
         );
+
         timeGroup.add(use24hRow);
 
         const dateFormatRow = new Adw.ComboRow({
@@ -144,24 +150,53 @@ export default class RainClockPreferences extends ExtensionPreferences {
             title: 'Appearance',
             icon_name: 'applications-graphics-symbolic',
         });
+
         window.add(colorPage);
+
+        const styleGroup = new Adw.PreferencesGroup({
+            title: 'Style',
+        });
+
+        colorPage.add(styleGroup);
+
+        const styleNames = STYLE_OPTIONS.map(style => style.name);
+        const styleIds = STYLE_OPTIONS.map(style => style.id);
+
+        const styleRow = new Adw.ComboRow({
+            title: 'Style',
+            subtitle: 'Choose the visual style of the clock.',
+            model: Gtk.StringList.new(styleNames),
+        });
+
+        styleRow.set_selected(
+            Math.max(0, styleIds.indexOf(settings.get_string('style')))
+        );
+
+        styleRow.connect('notify::selected', () => {
+            settings.set_string('style', styleIds[styleRow.get_selected()]);
+        });
+
+        styleGroup.add(styleRow);
 
         const colorGroup = new Adw.PreferencesGroup({
             title: 'Automatic color',
             description: 'Rain Clock analyzes the center of the current wallpaper.',
         });
+
         colorPage.add(colorGroup);
 
         const autoColorRow = new Adw.SwitchRow({
             title: 'Automatic text color',
             subtitle: 'Switch between your dark, mid and light colors.',
         });
+
         settings.bind(
             'auto-color',
             autoColorRow,
             'active',
             Gio.SettingsBindFlags.DEFAULT
         );
+
         colorGroup.add(autoColorRow);
 
         const regionRow = new Adw.SpinRow({
@@ -187,6 +222,7 @@ export default class RainClockPreferences extends ExtensionPreferences {
         const thresholdGroup = new Adw.PreferencesGroup({
             title: 'Luminance thresholds',
         });
+
         colorPage.add(thresholdGroup);
 
         const darkThresholdRow = new Adw.SpinRow({
@@ -200,12 +236,14 @@ export default class RainClockPreferences extends ExtensionPreferences {
             }),
             digits: 2,
         });
+
         darkThresholdRow.connect('notify::value', () => {
             settings.set_double(
                 'dark-threshold',
                 darkThresholdRow.get_value()
             );
         });
+
         thresholdGroup.add(darkThresholdRow);
 
         const lightThresholdRow = new Adw.SpinRow({
@@ -219,17 +257,20 @@ export default class RainClockPreferences extends ExtensionPreferences {
             }),
             digits: 2,
         });
+
         lightThresholdRow.connect('notify::value', () => {
             settings.set_double(
                 'light-threshold',
                 lightThresholdRow.get_value()
             );
         });
+
         thresholdGroup.add(lightThresholdRow);
 
         const colorsGroup = new Adw.PreferencesGroup({
             title: 'Color palette',
         });
+
         colorPage.add(colorsGroup);
 
         const colorDialog = new Gtk.ColorDialog({
