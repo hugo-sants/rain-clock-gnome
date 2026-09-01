@@ -27,7 +27,7 @@ export class SummitStyle extends BaseStyle {
         this._monitorHeight = monitorHeight;
         this._textColor = textColor;
 
-        const scale = (monitorHeight / this._defaults.scaling.baseHeight) * 1.4;
+        const scale = (monitorHeight / this._defaults.scaling.baseHeight) * 1.2;
 
         this._greetingSize = Math.round(14 * scale);
 
