@@ -1,10 +1,9 @@
 import Clutter from 'gi://Clutter';
 
-import Pango from 'gi://Pango';
-
 import St from 'gi://St';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import { createStyle } from '../styles/style-registry.js';
 
 const DAYS = [
     'SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY',
@@ -29,31 +28,17 @@ export class ClockWidget {
 
     create(textColor) {
         const monitor = Main.layoutManager.primaryMonitor;
-        const height = monitor?.height ?? this._defaults.scaling.baseHeight;
-        const labels = this._createLabels(height, textColor);
+        const styleId = this._settings.get_string('style');
 
-        this._primary = this._createContainer('rain-clock-container', labels, monitor);
+        this._primary = this._createContainer(styleId, monitor, textColor);
+
         Main.layoutManager._backgroundGroup.add_child(this._primary.container);
+
         this._onCreate?.(this._primary.container);
 
         this._rebuildExtraMonitors(textColor);
 
-        this._allocationId = this._primary.clock.connect(
-            'notify::allocation',
-            () => {
-                if (!this._initialLayout)
-                    return;
-
-                this._initialLayout = false;
-
-                if (this._allocationId) {
-                    this._primary.clock.disconnect(this._allocationId);
-                    this._allocationId = null;
-                }
-
-                this._positionCurrentWidgets();
-            }
-        );
+        this._connectInitialAllocation();
 
         this.update();
         this.reposition();
@@ -61,14 +46,33 @@ export class ClockWidget {
         return this._primary;
     }
 
+    setStyle(styleId, textColor) {
+        if (!this._primary)
+            return;
+
+        this._disconnectInitialAllocation();
+
+        this._replaceStyle(this._primary, styleId, textColor);
+
+        for (const extra of this._extras)
+            this._replaceStyle(extra, styleId, textColor);
+
+        this._initialLayout = true;
+
+        this._connectInitialAllocation();
+
+        this.update();
+        this.reposition();
+    }
+
     updateColor(textColor) {
         if (!this._primary)
             return;
 
-        this._applyLabelStyles(this._primary.labels, this._primary.monitor.height, textColor);
+        this._primary.style.updateColor(textColor);
 
         for (const extra of this._extras)
-            this._applyLabelStyles(extra.labels, extra.monitor.height, textColor);
+            extra.style.updateColor(textColor);
     }
 
     update() {
@@ -100,12 +104,16 @@ export class ClockWidget {
             time = `${String(h12).padStart(2, '0')}:${mins} ${ampm}`;
         }
 
-        const timeText = `${this._defaults.timeChar} ${time} ${this._defaults.timeChar}`;
+        const data = {
+            day,
+            date,
+            time: `${this._defaults.timeChar} ${time} ${this._defaults.timeChar}`,
+        };
 
-        this._setLabels(this._primary.labels, day, date, timeText);
+        this._primary.style.update(data);
 
         for (const extra of this._extras)
-            this._setLabels(extra.labels, day, date, timeText);
+            extra.style.update(data);
     }
 
     refreshMonitors(textColor) {
@@ -116,16 +124,16 @@ export class ClockWidget {
     reposition() {
         if (!this._primary)
             return;
-    
+
         if (this._initialLayout) {
             this._primary.container.queue_relayout();
             this._primary.clock.queue_relayout();
-    
+
             for (const extra of this._extras) {
                 extra.container.queue_relayout();
                 extra.clock.queue_relayout();
             }
-    
+
             return;
         }
 
@@ -133,36 +141,75 @@ export class ClockWidget {
     }
 
     destroy() {
-        if (this._allocationId) {
-            this._primary?.clock?.disconnect(this._allocationId);
-            this._allocationId = null;
-        }
+        this._disconnectInitialAllocation();
 
         for (const extra of this._extras)
-            extra.container.destroy();
+            extra.style.destroy();
 
         this._extras = [];
+
+        this._primary?.style?.destroy();
         this._primary?.container?.destroy();
+
         this._primary = null;
+    }
+
+    _connectInitialAllocation() {
+        if (!this._primary)
+            return;
+
+        this._allocationId = this._primary.clock.connect(
+            'notify::allocation',
+            () => {
+                if (!this._initialLayout)
+                    return;
+
+                this._initialLayout = false;
+
+                this._disconnectInitialAllocation();
+
+                this._positionCurrentWidgets();
+            }
+        );
+    }
+
+    _disconnectInitialAllocation() {
+        if (!this._allocationId)
+            return;
+
+        this._primary?.clock?.disconnect(this._allocationId);
+
+        this._allocationId = null;
     }
 
     _positionCurrentWidgets() {
         const position = this._settings.get_string('position');
         const marginX = this._settings.get_int('margin-x');
         const marginY = this._settings.get_int('margin-y');
-    
-        this._positionContainer(this._primary, position, marginX, marginY);
-    
+
+        this._positionContainer(
+            this._primary,
+            position,
+            marginX,
+            marginY
+        );
+
         for (const extra of this._extras)
-            this._positionContainer(extra, position, marginX, marginY);
+            this._positionContainer(
+                extra,
+                position,
+                marginX,
+                marginY
+            );
     }
 
     _rebuildExtraMonitors(textColor) {
         for (const extra of this._extras)
-            extra.container.destroy();
+            extra.style.destroy();
 
         this._extras = [];
 
+        const styleId = this._settings.get_string('style');
         const primaryIndex = Main.layoutManager.primaryIndex;
         const monitors = Main.layoutManager.monitors;
 
@@ -171,53 +218,23 @@ export class ClockWidget {
                 continue;
 
             const monitor = monitors[i];
-            const labels = this._createLabels(monitor.height || this._defaults.scaling.baseHeight, textColor);
-            const widget = this._createContainer('rain-clock-container', labels, monitor);
+
+            const widget = this._createContainer(
+                styleId,
+                monitor,
+                textColor
+            );
 
             Main.layoutManager._backgroundGroup.add_child(widget.container);
+
             this._extras.push(widget);
         }
     }
 
-    _createLabels(monitorHeight, textColor) {
-        const styles = this._buildStyles(monitorHeight, textColor);
-
-        const dayLabel = new St.Label({
-            style: styles.day,
-            x_align: Clutter.ActorAlign.CENTER,
-            x_expand: true,
-        });
-
-        const dateLabel = new St.Label({
-            style: styles.date,
-            x_align: Clutter.ActorAlign.CENTER,
-            x_expand: true,
-        });
-
-        const timeLabel = new St.Label({
-            style: styles.time,
-            x_align: Clutter.ActorAlign.CENTER,
-            x_expand: true,
-        });
-
-        for (const label of [dayLabel, dateLabel, timeLabel]) {
-            label.style_class = 'rain-clock-label';
-
-            if (label.clutter_text)
-                label.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
-        }
-
-        return {
-            day: dayLabel,
-            date: dateLabel,
-            time: timeLabel,
-        };
-    }
-
-    _createContainer(styleClass, labels, monitor) {
+    _createContainer(styleId, monitor, textColor) {
         const container = new St.Widget({
             name: 'RainClockMonitor',
-            style_class: styleClass,
+            style_class: 'rain-clock-container',
             layout_manager: new Clutter.BinLayout(),
             reactive: false,
             can_focus: false,
@@ -226,75 +243,40 @@ export class ClockWidget {
             height: monitor.height,
         });
 
-        const clock = new St.BoxLayout({
-            name: 'RainClockWidget',
-            vertical: true,
-            reactive: false,
-            can_focus: false,
-            track_hover: false,
-        });
+        const style = createStyle(styleId, this._defaults);
 
-        clock.add_child(labels.day);
-        clock.add_child(labels.date);
-        clock.add_child(labels.time);
+        const clock = style.create(
+            monitor.height || this._defaults.scaling.baseHeight,
+            textColor
+        );
 
         container.add_child(clock);
 
         return {
             container,
             clock,
-            labels,
+            style,
             monitor,
         };
     }
 
-    _setLabels(labels, day, date, time) {
-        labels.day.set_text(day);
-        labels.date.set_text(date);
-        labels.time.set_text(time);
-    }
+    _replaceStyle(widget, styleId, textColor) {
+        const oldStyle = widget.style;
 
-    _applyLabelStyles(labels, monitorHeight, textColor) {
-        const styles = this._buildStyles(monitorHeight, textColor);
+        const style = createStyle(styleId, this._defaults);
 
-        labels.day.set_style(styles.day);
-        labels.date.set_style(styles.date);
-        labels.time.set_style(styles.time);
-    }
+        const clock = style.create(
+            widget.monitor.height || this._defaults.scaling.baseHeight,
+            textColor
+        );
 
-    _buildStyles(monitorHeight, textColor) {
-        const scale = monitorHeight / this._defaults.scaling.baseHeight;
-        const daySize = Math.round(this._defaults.day.baseSize * scale);
-        const dayLetterSpacing = Math.round(this._defaults.day.baseLetterSpacing * scale);
-        const subSize = Math.round(this._defaults.secondary.baseSize * scale);
-        const subLetterSpacing = Math.round(this._defaults.secondary.baseLetterSpacing * scale);
-        const datePadding = Math.round(this._defaults.secondary.datePaddingTop * scale);
-        const timePadding = Math.round(this._defaults.secondary.timePaddingTop * scale);
+        widget.container.remove_child(widget.clock);
+        oldStyle.destroy();
 
-        return {
-            day:
-                `font-family: ${this._defaults.day.fontFamily}, sans-serif; ` +
-                `font-size: ${daySize}px; ` +
-                `color: ${textColor}; ` +
-                `letter-spacing: ${dayLetterSpacing}px; ` +
-                `text-align: center;`,
+        widget.container.add_child(clock);
 
-            date:
-                `font-family: ${this._defaults.secondary.fontFamily}, sans-serif; ` +
-                `font-size: ${subSize}px; ` +
-                `color: ${textColor}; ` +
-                `letter-spacing: ${subLetterSpacing}px; ` +
-                `text-align: center; ` +
-                `padding-top: ${datePadding}px;`,
-
-            time:
-                `font-family: ${this._defaults.secondary.fontFamily}, sans-serif; ` +
-                `font-size: ${subSize}px; ` +
-                `color: ${textColor}; ` +
-                `letter-spacing: ${subLetterSpacing}px; ` +
-                `text-align: center; ` +
-                `padding-top: ${timePadding}px;`,
-        };
+        widget.style = style;
+        widget.clock = clock;
     }
 
     _getClockSize(clock) {
