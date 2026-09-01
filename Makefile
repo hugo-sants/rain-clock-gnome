@@ -17,7 +17,7 @@ install: fonts-install
 
 fonts-install:
 	@mkdir -p $(FONT_DIR)
-	@cp fonts/*.otf $(FONT_DIR)/
+	@cp fonts/* $(FONT_DIR)/
 	@fc-cache -f
 	@echo "Rain Clock fonts installed successfully."
 
