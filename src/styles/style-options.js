@@ -7,4 +7,8 @@ export const STYLE_OPTIONS = [
         id: 'summit',
         name: 'Summit',
     },
+    {
+        id: 'meenimal',
+        name: 'Meenimal',
+    },
 ];
