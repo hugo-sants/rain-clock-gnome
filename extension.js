@@ -97,6 +97,15 @@ export default class RainClockExtension extends Extension {
     }
 
     _onSettingsChanged(key) {
+        if (key === 'style') {
+            this._clock?.setStyle(
+                this._settings.get_string('style'),
+                this._textColor
+            );
+        
+            return;
+        }
+
         if (
             key === 'auto-color' ||
             key === 'center-region-size' ||

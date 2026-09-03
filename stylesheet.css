@@ -8,6 +8,39 @@
     src: url('fonts/Poppins.ttf');
 }
 
+@font-face {
+    font-family: 'Electroharmonix';
+    src: url('fonts/electroharmonix.ttf');
+}
+
+@font-face {
+    font-family: 'Outfit';
+    src: url('fonts/Outfit-ExtraBold.ttf');
+    font-weight: 800;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Google Sans';
+    src: url('fonts/GoogleSans-Regular.ttf');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Gilroy Bold';
+    src: url('fonts/Gilroy-Bold.ttf');
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Gilroy SemiBold';
+    src: url('fonts/Gilroy-SemiBold.ttf');
+    font-weight: 600;
+    font-style: normal;
+}
+
 .rain-clock-container {
     background: transparent;
     spacing: 0;
@@ -15,5 +48,30 @@
 }
 
 .rain-clock-label {
+    background: transparent;
+}
+
+.rain-clock-mond {
+    background: transparent;
+}
+
+.rain-clock-mond-label {
+    background: transparent;
+}
+
+.rain-clock-summit {
+    background: transparent;
+    spacing: 0;
+    padding: 0;
+}
+
+.rain-clock-summit-label {
+    background: transparent;
+}
+
+.rain-clock-summit-greeting,
+.rain-clock-summit-main,
+.rain-clock-summit-date,
+.rain-clock-summit-time {
     background: transparent;
 }
