@@ -6,6 +6,7 @@ Configurable GNOME Shell clock focused on desktop-oriented layouts, multiple vis
 
 ![Mond](assets/rain-clock-mond.png)
 ![Summit](assets/rain-clock-summit.png)
+![Meenimal](assets/rain-clock-meenimal.png)
 
 ## Features
 
@@ -63,7 +64,14 @@ gnome-extensions prefs rainclock@hugo-sants.github.com
 
 - Visual references: Mond and Summit Rainmeter skins
 - Inspiration: [KDE Modern Clock](https://github.com/Prayag2/kde_modernclock) by Prayag2
-- Fonts: Anurati by Emmeran Richard, Poppins by Indian Type Foundry, Electroharmonix, and Outfit
+- Fonts:
+  - Anurati — Emmeran Richard
+  - Poppins — Indian Type Foundry
+  - Electroharmonix
+  - Outfit
+  - Google Sans
+  - Gilroy Bold
+  - Gilroy SemiBold
 
 ## License
 
